@@ -15,6 +15,9 @@ import {
   Chip,
   Fade,
   CircularProgress,
+  TableContainer,
+  Pagination,
+  Container,
 } from '@mui/material';
 import { getTransactions, type TransactionFilters } from '../api/transactions';
 import { AgentSelect } from '../components/AgentSelect';
@@ -69,7 +72,7 @@ export function Transactions() {
 
   return (
     <Fade in>
-      <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
+      <Container maxWidth="lg">
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2, mb: 2 }}>
           <Typography variant="h5" fontWeight={600}>Giao dịch</Typography>
           <Button component={Link} to="/transactions/new" variant="contained">Tạo giao dịch</Button>
@@ -103,43 +106,50 @@ export function Transactions() {
         {!loading && (
           <>
             <Paper variant="outlined" sx={{ overflow: 'hidden' }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell><strong>Mã GD</strong></TableCell>
-                    <TableCell><strong>Khách hàng</strong></TableCell>
-                    <TableCell><strong>Đại lý</strong></TableCell>
-                    <TableCell><strong>Loại</strong></TableCell>
-                    <TableCell><strong>Số tiền</strong></TableCell>
-                    <TableCell><strong>Trạng thái</strong></TableCell>
-                    <TableCell><strong>Ngày</strong></TableCell>
-                    <TableCell></TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {transactions.map((t) => (
-                    <TableRow key={t.id} hover>
-                      <TableCell>{t.transaction_id}</TableCell>
-                      <TableCell>{t.customer_name}</TableCell>
-                      <TableCell>{t.agent?.name ?? '-'}</TableCell>
-                      <TableCell>{t.transaction_type}</TableCell>
-                      <TableCell>{formatMoney(Number(t.total_amount))}</TableCell>
-                      <TableCell><Chip size="small" label={t.status} variant="outlined" /></TableCell>
-                      <TableCell>{formatDate(t.transaction_date)}</TableCell>
-                      <TableCell><Button size="small" component={Link} to={`/transactions/${t.id}`}>Chi tiết</Button></TableCell>
+              <TableContainer sx={{ maxHeight: 540 }}>
+                <Table size="small" stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell><strong>Mã GD</strong></TableCell>
+                      <TableCell><strong>Khách hàng</strong></TableCell>
+                      <TableCell><strong>Đại lý</strong></TableCell>
+                      <TableCell><strong>Loại</strong></TableCell>
+                      <TableCell><strong>Số tiền</strong></TableCell>
+                      <TableCell><strong>Trạng thái</strong></TableCell>
+                      <TableCell><strong>Ngày</strong></TableCell>
+                      <TableCell></TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHead>
+                  <TableBody>
+                    {transactions.map((t) => (
+                      <TableRow key={t.id} hover>
+                        <TableCell>{t.transaction_id}</TableCell>
+                        <TableCell>{t.customer_name}</TableCell>
+                        <TableCell>{t.agent?.name ?? '-'}</TableCell>
+                        <TableCell>{t.transaction_type}</TableCell>
+                        <TableCell>{formatMoney(Number(t.total_amount))}</TableCell>
+                        <TableCell><Chip size="small" label={t.status} variant="outlined" /></TableCell>
+                        <TableCell>{formatDate(t.transaction_date)}</TableCell>
+                        <TableCell><Button size="small" component={Link} to={`/transactions/${t.id}`}>Chi tiết</Button></TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </Paper>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2 }}>
-              <Button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Trước</Button>
-              <Typography variant="body2">Trang {page} / {lastPage} (tổng {total})</Typography>
-              <Button disabled={page >= lastPage} onClick={() => setPage((p) => p + 1)}>Sau</Button>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 2, flexWrap: 'wrap', gap: 1 }}>
+              <Typography variant="body2">Tổng {total} giao dịch</Typography>
+              <Pagination
+                count={lastPage}
+                page={page}
+                color="primary"
+                onChange={(_, value) => setPage(value)}
+                size="small"
+              />
             </Box>
           </>
         )}
-      </Box>
+      </Container>
     </Fade>
   );
 }

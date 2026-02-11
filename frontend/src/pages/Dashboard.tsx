@@ -8,6 +8,7 @@ import {
   Skeleton,
   Fade,
   Chip,
+  Container,
 } from '@mui/material';
 import { getSummary } from '../api/statistics';
 import { getConfig } from '../api/config';
@@ -34,7 +35,7 @@ export function Dashboard() {
 
   if (loading) {
     return (
-      <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
+      <Container maxWidth="lg">
         <Skeleton variant="text" width={200} height={40} sx={{ mb: 2 }} />
         <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
           <Skeleton variant="rounded" width={120} height={28} />
@@ -45,14 +46,14 @@ export function Dashboard() {
             <Skeleton key={i} variant="rounded" height={140} />
           ))}
         </Box>
-      </Box>
+      </Container>
     );
   }
 
   return (
     <Fade in>
-      <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
-        <Typography variant="h5" fontWeight={600} sx={{ mb: 2 }}>
+      <Container maxWidth="lg">
+        <Typography variant="h5" sx={{ mb: 2 }}>
           Tổng quan
         </Typography>
         {config && (
@@ -97,7 +98,7 @@ export function Dashboard() {
             Chưa có dữ liệu thống kê. Chọn đại lý để xem thống kê.
           </Typography>
         )}
-      </Box>
+      </Container>
     </Fade>
   );
 }

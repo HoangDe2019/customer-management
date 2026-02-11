@@ -1,4 +1,14 @@
 import { useState } from 'react';
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Container,
+  TextField,
+  Typography,
+  CircularProgress,
+} from '@mui/material';
 import { getDailyAdvances, settleDailyAdvances } from '../api/settlements';
 import { AgentSelect } from '../components/AgentSelect';
 
@@ -36,38 +46,80 @@ export function DailyAdvances() {
   };
 
   return (
-    <div className="daily-advances-page">
-      <h1>Tạm ứng theo ngày</h1>
-      <div className="filters card">
-        <label>
-          Đại lý
-          <AgentSelect value={agentId} onChange={setAgentId} />
-        </label>
-        <label>
-          Ngày (dd/mm/yyyy)
-          <input
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            placeholder="01/01/2025"
-          />
-        </label>
-        <button type="button" className="btn btn-primary" onClick={load} disabled={!agentId || loading}>
-          {loading ? 'Đang tải...' : 'Xem'}
-        </button>
-      </div>
-      {data && (
-        <div className="card">
-          <pre className="data-json">{JSON.stringify(data, null, 2)}</pre>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={handleSettle}
-            disabled={settling}
+    <Container maxWidth="md">
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h5" sx={{ mb: 1 }}>
+          Tạm ứng theo ngày
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Xem và đối soát tạm ứng theo ngày cho từng đại lý.
+        </Typography>
+      </Box>
+
+      <Card sx={{ mb: 3 }} variant="outlined">
+        <CardContent>
+          <Box
+            sx={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 2,
+              alignItems: 'center',
+            }}
           >
-            {settling ? 'Đang đối soát...' : 'Đối soát tạm ứng'}
-          </button>
-        </div>
+            <Box sx={{ minWidth: 220 }}>
+              <AgentSelect value={agentId} onChange={setAgentId} />
+            </Box>
+            <TextField
+              label="Ngày (dd/mm/yyyy)"
+              size="small"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              placeholder="01/01/2025"
+            />
+            <Button
+              variant="contained"
+              onClick={load}
+              disabled={!agentId || loading}
+              startIcon={loading ? <CircularProgress size={16} color="inherit" /> : null}
+            >
+              {loading ? 'Đang tải...' : 'Xem'}
+            </Button>
+          </Box>
+        </CardContent>
+      </Card>
+
+      {data && (
+        <Card variant="outlined">
+          <CardContent>
+            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
+              Kết quả tạm ứng
+            </Typography>
+            <Box
+              component="pre"
+              sx={{
+                bgcolor: 'grey.100',
+                borderRadius: 1,
+                p: 2,
+                maxHeight: 320,
+                overflow: 'auto',
+                fontSize: 13,
+              }}
+            >
+              {JSON.stringify(data, null, 2)}
+            </Box>
+            <Box sx={{ mt: 2, textAlign: 'right' }}>
+              <Button
+                variant="contained"
+                onClick={handleSettle}
+                disabled={settling}
+                startIcon={settling ? <CircularProgress size={16} color="inherit" /> : null}
+              >
+                {settling ? 'Đang đối soát...' : 'Đối soát tạm ứng'}
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
       )}
-    </div>
+    </Container>
   );
 }

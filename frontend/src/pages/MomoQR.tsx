@@ -1,19 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { generateMoMoQR } from '../api/momo';
+import type { MoMoQRResponse } from '../types';
 
 export function MomoQR() {
     const [customerName, setCustomerName] = useState('');
     const [totalAmount, setTotalAmount] = useState('');
     const [transactionType, setTransactionType] = useState<'Đáo' | 'Rút'>('Đáo');
-    const [result, setResult] = useState<{ qrCodeUrl: string | null; payUrl: string | null; message: string } | null>(null);
+    const [result, setResult] = useState<MoMoQRResponse | null>(null);
     const [loading, setLoading] = useState(false);
-    const [paymentStatus, setPaymentStatus] = useState('pending'); // pending, checking, success, failed
-    const iframeRef = useRef(null);
-    const statusCheckInterval = useRef(null);
+    const [paymentStatus, setPaymentStatus] = useState<'pending' | 'checking' | 'success' | 'failed'>('pending');
+    const iframeRef = useRef<HTMLIFrameElement | null>(null);
+    const statusCheckInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
     // Auto-check payment status every 3 seconds
     useEffect(() => {
-        if (result && result.payUrl) {
+        if (result && result.orderId) {
             startStatusCheck();
         }
 
@@ -28,7 +29,16 @@ export function MomoQR() {
         e.preventDefault();
         const amount = parseFloat(totalAmount);
         if (isNaN(amount) || amount < 1000) {
-            setResult({ qrCodeUrl: null, payUrl: null, message: 'Số tiền tối thiểu 1.000 VNĐ' });
+            setResult({
+                paymentId: null,
+                orderId: null,
+                qrCodeUrl: null,
+                payUrl: null,
+                deeplink: null,
+                status: 'failed',
+                resultCode: -1,
+                message: 'Số tiền tối thiểu 1.000 VNĐ',
+            });
             return;
         }
         setLoading(true);
@@ -39,13 +49,19 @@ export function MomoQR() {
                 total_amount: amount,
                 transaction_type: transactionType,
             });
-            setResult({
-                qrCodeUrl: res.qrCodeUrl ?? null,
-                payUrl: res.payUrl ?? null,
-                message: res.message ?? '',
-            });
+            setResult(res);
+            setPaymentStatus('pending');
         } catch {
-            setResult({ qrCodeUrl: null, payUrl: null, message: 'Tạo QR thất bại' });
+            setResult({
+                paymentId: null,
+                orderId: null,
+                qrCodeUrl: null,
+                payUrl: null,
+                deeplink: null,
+                status: 'failed',
+                resultCode: -1,
+                message: 'Tạo QR thất bại',
+            });
         } finally {
             setLoading(false);
         }
@@ -53,28 +69,38 @@ export function MomoQR() {
 
 
     const startStatusCheck = () => {
+        if (statusCheckInterval.current) {
+            clearInterval(statusCheckInterval.current);
+        }
+
         // Check payment status every 3 seconds
         statusCheckInterval.current = setInterval(async () => {
-            if (!statusCheckInterval.current) return;
+            if (!result?.orderId) {
+                return;
+            }
+
             try {
-                const orderId = extractOrderId(result?.payUrl ?? '');
-                const response = await fetch(`/api/momo/check-status/${orderId}`, {
+                const response = await fetch(`/api/momo/check-status/${result.orderId}`, {
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-                    }
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    },
                 });
 
-                const data = await response.json();
+                const data: { status: string } = await response.json();
 
                 if (data.status === 'success') {
                     setPaymentStatus('success');
-                    clearInterval(statusCheckInterval?.current ?? 0);
+                    if (statusCheckInterval.current) {
+                        clearInterval(statusCheckInterval.current);
+                    }
 
                     // Show success notification
-                    showNotification('Thanh toán thành công! 🎉');
+                    showNotification('Thanh toán thành công!');
                 } else if (data.status === 'failed') {
                     setPaymentStatus('failed');
-                    clearInterval(statusCheckInterval.current);
+                    if (statusCheckInterval.current) {
+                        clearInterval(statusCheckInterval.current);
+                    }
 
                     // Show error notification
                     showNotification('Thanh toán thất bại!');
@@ -85,12 +111,6 @@ export function MomoQR() {
                 console.error('Error checking payment status:', error);
             }
         }, 3000);
-    };
-
-    const extractOrderId = (url: string) => {
-        // Extract orderId from MoMo URL
-        const match = url.match(/orderId=([^&]+)/);
-        return match ? match[1] as string : null;
     };
 
 

@@ -5,6 +5,9 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\SettlementController;
 use App\Http\Controllers\Api\MoMoController;
+use App\Http\Controllers\Api\AgentController;
+use App\Http\Controllers\Api\StatisticsController;
+use App\Http\Controllers\Api\QueueController;
 
 // Public routes
 Route::post('/auth/login', [AuthController::class, 'login']);
@@ -22,12 +25,12 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/auth/refresh', [AuthController::class, 'refresh']);
 
     // Agents
-    Route::get('/agents', [\App\Http\Controllers\Api\AgentController::class, 'index']);
-    Route::get('/agents/user-agents', [\App\Http\Controllers\Api\AgentController::class, 'userAgents']);
-    Route::post('/agents', [\App\Http\Controllers\Api\AgentController::class, 'store'])->middleware('admin');
-    Route::get('/agents/{agent}', [\App\Http\Controllers\Api\AgentController::class, 'show']);
-    Route::put('/agents/{agent}', [\App\Http\Controllers\Api\AgentController::class, 'update'])->middleware('admin');
-    Route::delete('/agents/{agent}', [\App\Http\Controllers\Api\AgentController::class, 'destroy'])->middleware('admin');
+    Route::get('/agents', [AgentController::class, 'index']);
+    Route::get('/agents/user-agents', [AgentController::class, 'userAgents']);
+    Route::post('/agents', [AgentController::class, 'store'])->middleware('admin');
+    Route::get('/agents/{agent}', [AgentController::class, 'show']);
+    Route::put('/agents/{agent}', [AgentController::class, 'update'])->middleware('admin');
+    Route::delete('/agents/{agent}', [AgentController::class, 'destroy'])->middleware('admin');
 
     // Transactions
     Route::get('/transactions', [TransactionController::class, 'index']);
@@ -46,21 +49,22 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/settlements/history', [SettlementController::class, 'getSettlementHistory']);
 
     // Statistics
-    Route::get('/statistics', [\App\Http\Controllers\Api\StatisticsController::class, 'index']);
-    Route::get('/statistics/summary', [\App\Http\Controllers\Api\StatisticsController::class, 'summary']);
+    Route::get('/statistics', [StatisticsController::class, 'index']);
+    Route::get('/statistics/summary', [StatisticsController::class, 'summary']);
 
     // MoMo QR
-    Route::post('/momo/generate-qr', [\App\Http\Controllers\Api\MoMoController::class, 'generateQR']);
-    Route::post('/momo/callback', [\App\Http\Controllers\Api\MoMoController::class, 'callback']);
-
+    Route::post('/momo/generate-qr', [MoMoController::class, 'generateQR']);
+    Route::get('/momo/check-status/{orderId}', [MoMoController::class, 'checkStatus']);
+    Route::post('/momo/callback', [MoMoController::class, 'callback']);
+    Route::post('/momo/webhook-callback', [MoMoController::class, 'webhookCallback']);
     // CCCD Scan (Gemini AI)
     Route::post('/cccd/scan', [TransactionController::class, 'scanCCCD']);
 
     // Queue (dynamic add + process via queue:work)
-    Route::post('/queue/dispatch', [\App\Http\Controllers\Api\QueueController::class, 'dispatch']);
-    Route::get('/queue/status', [\App\Http\Controllers\Api\QueueController::class, 'status']);
-    Route::post('/queue/clone-trigger', [\App\Http\Controllers\Api\QueueController::class, 'triggerClone']);
-    Route::get('/queue/clone-status', [\App\Http\Controllers\Api\QueueController::class, 'cloneStatus']);
+    Route::post('/queue/dispatch', [QueueController::class, 'dispatch']);
+    Route::get('/queue/status', [QueueController::class, 'status']);
+    Route::post('/queue/clone-trigger', [QueueController::class, 'triggerClone']);
+    Route::get('/queue/clone-status', [QueueController::class, 'cloneStatus']);
 });
 
 // Config for frontend

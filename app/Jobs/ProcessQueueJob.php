@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Models\User;
+use App\Services\TransactionService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -34,10 +36,15 @@ class ProcessQueueJob implements ShouldQueue
 
         try {
             match ($this->type) {
-                'cccd_scan' => $this->handleCccdScan(),
+                'cccd_scan'           => $this->handleCccdScan(),
                 'export_transactions' => $this->handleExportTransactions(),
-                'sync_to_staging' => $this->handleSyncToStaging(),
-                default => Log::warning('ProcessQueueJob unknown type: ' . $this->type),
+                'sync_to_staging'     => $this->handleSyncToStaging(),
+
+                // New generic business job types
+                'create_user'         => $this->handleCreateUser(),
+                'create_transaction'  => $this->handleCreateTransaction(),
+
+                default               => Log::warning('ProcessQueueJob unknown type: ' . $this->type),
             };
         } catch (\Throwable $e) {
             if ($this->type === 'sync_to_staging') {
@@ -60,6 +67,69 @@ class ProcessQueueJob implements ShouldQueue
     protected function handleExportTransactions(): void
     {
         Log::info('ProcessQueueJob: export_transactions processed', $this->payload);
+    }
+
+    /**
+     * Create a user asynchronously (basic example).
+     *
+     * Expected payload:
+     * - data: array{name, email, password, role?}
+     */
+    protected function handleCreateUser(): void
+    {
+        $data = $this->payload['data'] ?? [];
+
+        if (! isset($data['name'], $data['email'], $data['password'])) {
+            Log::warning('ProcessQueueJob:create_user missing required fields', ['payload' => $this->payload]);
+            return;
+        }
+
+        // Let database constraints enforce unique email, etc.
+        $user = User::create([
+            'name'     => $data['name'],
+            'email'    => $data['email'],
+            // Password is expected to be already hashed at the edge (controller/service)
+            'password' => $data['password'],
+            'role'     => $data['role'] ?? 'user',
+        ]);
+
+        Log::info('ProcessQueueJob:create_user created user', ['id' => $user->id, 'email' => $user->email]);
+    }
+
+    /**
+     * Create a transaction asynchronously via TransactionService.
+     *
+     * Expected payload:
+     * - user_id: int
+     * - data: array (validated transaction input)
+     */
+    protected function handleCreateTransaction(): void
+    {
+        if (! isset($this->payload['user_id'], $this->payload['data']) || ! is_array($this->payload['data'])) {
+            Log::warning('ProcessQueueJob:create_transaction missing required payload', ['payload' => $this->payload]);
+            return;
+        }
+
+        $userId = (int) $this->payload['user_id'];
+        $data   = $this->payload['data'];
+
+        /** @var \App\Models\User $user */
+        $user = User::find($userId);
+
+        if (! $user) {
+            Log::warning('ProcessQueueJob:create_transaction user not found', ['user_id' => $userId]);
+            return;
+        }
+
+        /** @var TransactionService $service */
+        $service = app(TransactionService::class);
+
+        $transaction = $service->createTransaction($data, $user);
+
+        Log::info('ProcessQueueJob:create_transaction created transaction', [
+            'transaction_id' => $transaction->id,
+            'agent_id'       => $transaction->agent_id,
+        ]);
     }
 
     protected function handleSyncToStaging(): void

@@ -111,9 +111,12 @@ export interface ExportResult {
 }
 
 export interface MoMoQRResponse {
+  paymentId: number | null;
+  orderId: string | null;
   qrCodeUrl: string | null;
   payUrl: string | null;
   deeplink: string | null;
+  status: 'pending' | 'success' | 'failed' | 'not_found' | string;
   resultCode: number | string;
   message: string;
 }

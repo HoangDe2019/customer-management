@@ -18,9 +18,8 @@ import {
   Typography,
 } from '@mui/material';
 import { getStatistics } from '../api/statistics';
-import { getUserAgents } from '../api/agents';
+import { AgentSelect } from '../components/AgentSelect';
 import type { Statistics as StatsType } from '../types';
-import type { Agent } from '../types';
 
 function formatMoney(n: number) {
   return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(n) + ' ₫';
@@ -29,7 +28,6 @@ function formatMoney(n: number) {
 export function Statistics() {
   const [searchParams] = useSearchParams();
   const agentIdParam = searchParams.get('agent_id');
-  const [agents, setAgents] = useState<Agent[]>([]);
   const [agentId, setAgentId] = useState<number | ''>(() => {
     if (agentIdParam) {
       const n = parseInt(agentIdParam, 10);
@@ -42,18 +40,17 @@ export function Statistics() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    getUserAgents().then(setAgents);
-  }, []);
-
-  useEffect(() => {
     if (!agentId) {
       setData(null);
       return;
     }
+    let cancelled = false;
     setLoading(true);
     getStatistics(agentId, period)
-      .then(setData)
-      .finally(() => setLoading(false));
+      .then((res) => { if (!cancelled) setData(res); })
+      .catch(() => { if (!cancelled) setData(null); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [agentId, period]);
 
   return (
@@ -71,21 +68,14 @@ export function Statistics() {
         <Card sx={{ mb: 3 }} variant="outlined">
           <CardContent>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-              <TextField
-                select
-                size="small"
-                label="Đại lý"
-                value={agentId === '' ? '' : agentId}
-                onChange={(e) => setAgentId(e.target.value ? Number(e.target.value) : '')}
-                sx={{ minWidth: 220 }}
-              >
-                <MenuItem value="">Chọn đại lý</MenuItem>
-                {agents.map((a) => (
-                  <MenuItem key={a.id} value={a.id}>
-                    {a.name}
-                  </MenuItem>
-                ))}
-              </TextField>
+              <Box sx={{ minWidth: 220 }}>
+                <AgentSelect
+                  value={agentId}
+                  onChange={setAgentId}
+                  placeholder="Chọn đại lý"
+                  label="Đại lý"
+                />
+              </Box>
 
               <TextField
                 select

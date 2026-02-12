@@ -23,6 +23,7 @@ class AuthController extends Controller
 
         $credentials = $request->only('email', 'password');
 
+        // Debug: Check if user exists
         if (!$token = auth('api')->attempt($credentials)) {
             throw ValidationException::withMessages([
                 'email' => [__('auth.failed')],

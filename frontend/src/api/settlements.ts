@@ -1,5 +1,10 @@
-import { api } from '../lib/api';
-import type { PaginatedResponse } from '../types';
+export {
+  getDailyAdvances,
+  settleDailyAdvances,
+  getEodSettlement,
+  saveEodSettlement,
+  getSettlementHistory,
+} from './graphqlApi';
 
 export interface DailyAdvanceSummary {
   date: string;
@@ -8,46 +13,8 @@ export interface DailyAdvanceSummary {
   [key: string]: unknown;
 }
 
-export async function getDailyAdvances(agentId: number, date: string): Promise<DailyAdvanceSummary> {
-  const { data } = await api.get<DailyAdvanceSummary>('/daily-advances', {
-    params: { agent_id: agentId, date },
-  });
-  return data;
-}
-
-export async function settleDailyAdvances(
-  agentId: number,
-  date: string
-): Promise<{ success?: boolean; message?: string }> {
-  const { data } = await api.post('/daily-advances/settle', { agent_id: agentId, date });
-  return data;
-}
-
 export interface EodSettlementData {
   [key: string]: unknown;
-}
-
-export async function getEodSettlement(
-  agentId: number,
-  date: string
-): Promise<Record<string, unknown>> {
-  const { data } = await api.get('/settlements/eod', {
-    params: { agent_id: agentId, date },
-  });
-  return data;
-}
-
-export async function saveEodSettlement(
-  agentId: number,
-  date: string,
-  settlementData: EodSettlementData
-): Promise<unknown> {
-  const { data } = await api.post('/settlements/eod', {
-    agent_id: agentId,
-    date,
-    settlement_data: settlementData,
-  });
-  return data;
 }
 
 export interface EodSettlementRecord {
@@ -59,13 +26,4 @@ export interface EodSettlementRecord {
   [key: string]: unknown;
 }
 
-export async function getSettlementHistory(params?: {
-  agent_id?: number;
-  per_page?: number;
-  page?: number;
-}): Promise<PaginatedResponse<EodSettlementRecord>> {
-  const { data } = await api.get<PaginatedResponse<EodSettlementRecord>>('/settlements/history', {
-    params,
-  });
-  return data;
-}
+export type { PaginatedResponse } from '../types';

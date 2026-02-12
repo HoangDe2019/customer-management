@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Events\JobCompleted;
 use App\Models\User;
 use App\Services\TransactionService;
 use Illuminate\Bus\Queueable;
@@ -46,6 +47,7 @@ class ProcessQueueJob implements ShouldQueue
 
                 default               => Log::warning('ProcessQueueJob unknown type: ' . $this->type),
             };
+            event(new JobCompleted($this->type, 'success', $this->payload));
         } catch (\Throwable $e) {
             if ($this->type === 'sync_to_staging') {
                 Cache::put(self::CACHE_KEY_CLONE_LAST, [
@@ -55,6 +57,7 @@ class ProcessQueueJob implements ShouldQueue
                 ], now()->addDays(7));
             }
             Log::error('ProcessQueueJob failed', ['type' => $this->type, 'error' => $e->getMessage()]);
+            event(new JobCompleted($this->type, 'failed', ['error' => $e->getMessage()]));
             throw $e;
         }
     }

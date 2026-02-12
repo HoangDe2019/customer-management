@@ -14,7 +14,7 @@ import {
   MenuItem,
   Paper,
 } from '@mui/material';
-import { generateMoMoQR } from '../api/momo';
+import { generateMoMoQR, checkMoMoStatus } from '../api/momo';
 import type { MoMoQRResponse } from '../types';
 
 export function MomoQR() {
@@ -32,18 +32,53 @@ export function MomoQR() {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const statusCheckInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Auto-check payment status every 3 seconds
+  // Async callback pattern: poll payment status only when we have a valid orderId
   useEffect(() => {
-    if (result && result.orderId) {
-      startStatusCheck();
+    const orderId = result?.orderId;
+    if (!orderId || typeof orderId !== 'string' || orderId === 'null') {
+      return;
     }
-
+    if (statusCheckInterval.current) {
+      clearInterval(statusCheckInterval.current);
+    }
+    const runCheck = async () => {
+      try {
+        const data = await checkMoMoStatus(orderId);
+        if (data.status === 'success') {
+          setPaymentStatus('success');
+          setSnackbar({ open: true, message: 'Thanh toán thành công!', severity: 'success' });
+          if (statusCheckInterval.current) {
+            clearInterval(statusCheckInterval.current);
+            statusCheckInterval.current = null;
+          }
+          return;
+        }
+        if (data.status === 'failed' || data.status === 'not_found') {
+          setPaymentStatus('failed');
+          setSnackbar({
+            open: true,
+            message: data.status === 'not_found' ? 'Không tìm thấy giao dịch.' : 'Thanh toán thất bại!',
+            severity: 'error',
+          });
+          if (statusCheckInterval.current) {
+            clearInterval(statusCheckInterval.current);
+            statusCheckInterval.current = null;
+          }
+          return;
+        }
+        setPaymentStatus('checking');
+      } catch {
+        setPaymentStatus('checking');
+      }
+    };
+    statusCheckInterval.current = setInterval(runCheck, 3000);
+    runCheck();
     return () => {
       if (statusCheckInterval.current) {
         clearInterval(statusCheckInterval.current);
       }
     };
-  }, [result]);
+  }, [result?.orderId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,56 +132,6 @@ export function MomoQR() {
     }
   };
 
-  const startStatusCheck = () => {
-    if (statusCheckInterval.current) {
-      clearInterval(statusCheckInterval.current);
-    }
-
-    // Check payment status every 3 seconds
-    statusCheckInterval.current = setInterval(async () => {
-      if (!result?.orderId) {
-        return;
-      }
-
-      try {
-        const response = await fetch(`/api/momo/check-status/${result.orderId}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-          },
-        });
-
-        const data: { status: string } = await response.json();
-
-        if (data.status === 'success') {
-          setPaymentStatus('success');
-          if (statusCheckInterval.current) {
-            clearInterval(statusCheckInterval.current);
-          }
-
-          setSnackbar({
-            open: true,
-            message: 'Thanh toán thành công!',
-            severity: 'success',
-          });
-        } else if (data.status === 'failed') {
-          setPaymentStatus('failed');
-          if (statusCheckInterval.current) {
-            clearInterval(statusCheckInterval.current);
-          }
-
-          setSnackbar({
-            open: true,
-            message: 'Thanh toán thất bại!',
-            severity: 'error',
-          });
-        } else {
-          setPaymentStatus('checking');
-        }
-      } catch (error) {
-        console.error('Error checking payment status:', error);
-      }
-    }, 3000);
-  };
 
   const resetPayment = () => {
     setResult(null);

@@ -21,6 +21,7 @@ import {
   type QueueStatus,
   type CloneLastRun,
 } from '../api/queue';
+import { subscribeJobUpdates } from '../lib/echo';
 
 const JOB_TYPES = [
   { value: 'sync_to_staging', label: 'Clone to Staging' },
@@ -55,6 +56,13 @@ export function Queue() {
     fetchStatus();
     const interval = setInterval(fetchStatus, 5000);
     return () => clearInterval(interval);
+  }, [fetchStatus]);
+
+  useEffect(() => {
+    const unsub = subscribeJobUpdates(() => {
+      fetchStatus();
+    });
+    return () => unsub?.();
   }, [fetchStatus]);
 
   const handleTriggerClone = async () => {

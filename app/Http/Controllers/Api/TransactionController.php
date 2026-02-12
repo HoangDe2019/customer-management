@@ -3,6 +3,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\DataUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Transaction;
 use App\Models\Agent;
@@ -91,6 +92,7 @@ class TransactionController extends Controller
             $transaction = $this->transactionService->createTransaction($validated, $request->user());
 
             DB::commit();
+            event(new DataUpdated('transactions', 'created'));
 
             return response()->json($transaction->load(['agent', 'user']), 201);
         } catch (\Exception $e) {
@@ -135,6 +137,7 @@ class TransactionController extends Controller
             'old_value' => $oldStatus,
             'new_value' => $request->status,
         ]);
+        event(new DataUpdated('transactions', 'updated'));
 
         return response()->json($transaction);
     }

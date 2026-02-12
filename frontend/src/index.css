@@ -1,8 +1,23 @@
+/* Custom theme colors - clear and basic for end-user */
 :root {
+  --cm-primary: #1e40af;
+  --cm-primary-light: #3b82f6;
+  --cm-primary-dark: #1e3a8a;
+  --cm-surface: #ffffff;
+  --cm-background: #f1f5f9;
+  --cm-text: #0f172a;
+  --cm-text-secondary: #64748b;
+  --cm-border: #e2e8f0;
+  --cm-success: #15803d;
+  --cm-error: #b91c1c;
+  --cm-warning: #a16207;
+  --cm-radius: 8px;
+  --cm-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  --cm-shadow-hover: 0 4px 12px rgba(0,0,0,0.1);
   font-family: 'Segoe UI', system-ui, sans-serif;
   line-height: 1.5;
-  color: #1a1a1a;
-  background: #f0f2f5;
+  color: var(--cm-text);
+  background: var(--cm-background);
   font-synthesis: none;
 }
 
@@ -16,10 +31,11 @@ body {
 }
 
 a {
-  color: #2563eb;
+  color: var(--cm-primary-light);
   text-decoration: none;
 }
 a:hover {
+  color: var(--cm-primary-dark);
   text-decoration: underline;
 }
 
@@ -35,7 +51,7 @@ a:hover {
   align-items: center;
   gap: 1rem;
   padding: 0.75rem 1.5rem;
-  background: #1e293b;
+  background: var(--cm-primary-dark);
   color: #f1f5f9;
   flex-wrap: wrap;
 }
@@ -65,7 +81,7 @@ a:hover {
   color: #fff;
 }
 .nav-link.active {
-  background: #2563eb;
+  background: var(--cm-primary-light);
   color: #fff;
 }
 
@@ -110,12 +126,12 @@ a:hover {
   cursor: not-allowed;
 }
 .btn-primary {
-  background: #2563eb;
+  background: var(--cm-primary);
   color: #fff;
-  border-color: #2563eb;
+  border-color: var(--cm-primary);
 }
 .btn-primary:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: var(--cm-primary-dark);
 }
 .btn-ghost {
   background: transparent;
@@ -189,11 +205,12 @@ a:hover {
 
 /* Cards */
 .card {
-  background: #fff;
-  border-radius: 8px;
+  background: var(--cm-surface);
+  border-radius: var(--cm-radius);
   padding: 1.25rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  box-shadow: var(--cm-shadow);
   margin-bottom: 1rem;
+  border: 1px solid var(--cm-border);
 }
 
 /* Forms */
@@ -215,8 +232,8 @@ input, select {
 
 input:focus, select:focus {
   outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+  border-color: var(--cm-primary-light);
+  box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.2);
 }
 
 .form-actions {

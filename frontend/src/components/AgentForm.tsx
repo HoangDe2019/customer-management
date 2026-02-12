@@ -21,7 +21,7 @@ interface AgentFormProps {
 export function AgentForm({ agent, onSuccess, onCancel }: AgentFormProps) {
   const [name, setName] = useState(agent?.name ?? '');
   const [allowedUsers, setAllowedUsers] = useState(
-    Array.isArray(agent?.allowed_users) ? agent.allowed_users.join(', ') : ''
+    Array.isArray(agent?.allowed_users) ? agent?.allowed_users.join(', ') : ''
   );
   const [status, setStatus] = useState(agent?.status ?? 'Active');
   const [error, setError] = useState('');

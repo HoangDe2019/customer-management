@@ -2,9 +2,12 @@ import { createTheme } from '@mui/material/styles';
 
 export const theme = createTheme({
   palette: {
-    primary: { main: '#f7f7f4' },
+    primary: { main: '#1e40af', light: '#3b82f6', dark: '#1e3a8a' },
     secondary: { main: '#64748b' },
-    background: { default: '#f0f2f5', paper: '#ffffff' },
+    background: { default: '#f1f5f9', paper: '#ffffff' },
+    success: { main: '#15803d' },
+    error: { main: '#b91c1c' },
+    warning: { main: '#a16207' },
   },
   typography: {
     fontFamily: '"Segoe UI", system-ui, sans-serif',

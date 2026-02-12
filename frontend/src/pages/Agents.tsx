@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import { getAgents } from '../api/agents';
 import { useAuth } from '../context/AuthContext';
+import { subscribeDataUpdates } from '../lib/echo';
 import type { Agent } from '../types';
 import { AgentForm } from '../components/AgentForm';
 
@@ -22,18 +23,32 @@ export function Agents() {
   const { user } = useAuth();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<Agent | null>(null);
   const [showForm, setShowForm] = useState(false);
 
-  const load = () => {
+  const load = async () => {
     setLoading(true);
-    getAgents()
-      .then(setAgents)
-      .finally(() => setLoading(false));
+    setError(null);
+    try {
+      const list = await getAgents();
+      setAgents(list);
+    } catch {
+      setError('Không tải được danh sách đại lý.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     load();
+  }, []);
+
+  useEffect(() => {
+    const unsub = subscribeDataUpdates((payload) => {
+      if (payload.entity === 'agents') load();
+    });
+    return () => unsub?.();
   }, []);
 
   const isAdmin = user?.is_admin ?? false;
@@ -69,6 +84,11 @@ export function Agents() {
           )}
         </Box>
 
+        {error && (
+          <Box sx={{ mb: 2, p: 1.5, bgcolor: 'error.light', color: 'error.contrastText', borderRadius: 1 }}>
+            {error}
+          </Box>
+        )}
         {showForm && (
           <AgentForm onSuccess={handleCreated} onCancel={() => setShowForm(false)} />
         )}

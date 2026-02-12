@@ -3,6 +3,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\DataUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Agent;
 use App\Models\EodSettlement;
@@ -63,6 +64,8 @@ class SettlementController extends Controller
             $request->user()
         );
 
+        event(new DataUpdated('settlements', 'saved'));
+
         return response()->json($settlement, 201);
     }
 
@@ -102,6 +105,8 @@ class SettlementController extends Controller
 
         $date = Carbon::createFromFormat('d/m/Y', $request->date)->format('Y-m-d');
         $result = $this->settlementService->settleDailyAdvances($agent, $date);
+
+        event(new DataUpdated('settlements', 'settled'));
 
         return response()->json($result);
     }

@@ -21,6 +21,7 @@ import {
 } from '@mui/material';
 import { getTransactions, type TransactionFilters } from '../api/transactions';
 import { AgentSelect } from '../components/AgentSelect';
+import { subscribeDataUpdates } from '../lib/echo';
 import type { Transaction, PaginatedResponse } from '../types';
 
 const STATUS_OPTIONS = [
@@ -52,9 +53,20 @@ export function Transactions() {
   const [type, setType] = useState('');
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
+    const unsub = subscribeDataUpdates((payload) => {
+      if (payload.entity === 'transactions') setRefreshKey((k) => k + 1);
+    });
+    return () => unsub?.();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
     setLoading(true);
+    setError(null);
     const params: Record<string, unknown> = { page, per_page: 15 };
     if (agentId) params.agent_id = agentId;
     if (status) params.status = status;
@@ -62,9 +74,11 @@ export function Transactions() {
     if (dateTo) params.date_to = dateTo;
     if (type) params.transaction_type = type;
     getTransactions(params as TransactionFilters)
-      .then(setData)
-      .finally(() => setLoading(false));
-  }, [page, agentId, status, dateFrom, dateTo, type]);
+      .then((res) => { if (!cancelled) setData(res); })
+      .catch(() => { if (!cancelled) setError('Không tải được danh sách giao dịch.'); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [page, agentId, status, dateFrom, dateTo, type, refreshKey]);
 
   const transactions = data?.data ?? [];
   const total = data?.total ?? 0;
@@ -78,6 +92,11 @@ export function Transactions() {
           <Button component={Link} to="/transactions/new" variant="contained">Tạo giao dịch</Button>
         </Box>
 
+        {error && (
+          <Box sx={{ mb: 2, p: 1.5, bgcolor: 'error.light', color: 'error.contrastText', borderRadius: 1 }}>
+            {error}
+          </Box>
+        )}
         <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
             <Box sx={{ minWidth: 180 }}>

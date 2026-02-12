@@ -65,6 +65,12 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/queue/status', [QueueController::class, 'status']);
     Route::post('/queue/clone-trigger', [QueueController::class, 'triggerClone']);
     Route::get('/queue/clone-status', [QueueController::class, 'cloneStatus']);
+
+    // If in routes/api.php
+    Route::post('/graphql', [Rebing\GraphQL\GraphQLController::class, 'query']);
+
+    // If in routes/web.php (make sure 'graphql' is in cors.php paths)
+    // Route::post('/graphql', [Rebing\GraphQL\GraphQLController::class, 'query']);
 });
 
 // Config for frontend

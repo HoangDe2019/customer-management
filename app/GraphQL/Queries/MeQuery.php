@@ -24,7 +24,7 @@ class MeQuery extends Query
 
     public function resolve($root, array $args, $context, ResolveInfo $resolveInfo, Closure $getSelectFields)
     {
-        $user = $context['user'] ?? null;
+        $user = $context['user'] ?? auth()->user();
         if (!$user) {
             return null;
         }

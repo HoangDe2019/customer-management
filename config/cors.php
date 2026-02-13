@@ -5,7 +5,8 @@ return [
         'api/*',
         'graphql',           // ← Add this
         'graphql/*',         // ← And this for subscriptions
-        'sanctum/csrf-cookie'
+        'sanctum/csrf-cookie',
+        'broadcasting/auth',
     ],
 
     'allowed_methods' => ['*'],

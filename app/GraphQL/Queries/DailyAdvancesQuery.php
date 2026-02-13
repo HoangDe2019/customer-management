@@ -39,7 +39,7 @@ class DailyAdvancesQuery extends Query
 
     public function resolve($root, array $args, $context, ResolveInfo $resolveInfo, Closure $getSelectFields)
     {
-        $user = auth()->user();
+        $user = $context['user'] ?? auth()->user();
         if (!$user) {
             return ['value' => json_encode([])];
         }

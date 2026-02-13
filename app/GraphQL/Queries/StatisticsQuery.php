@@ -29,26 +29,33 @@ class StatisticsQuery extends Query
     {
         return [
             'agent_id' => ['type' => Type::nonNull(Type::int())],
-            'period' => ['type' => Type::string()],
+            'period' => ['type' => Type::string(), 'defaultValue' => 'all'],
         ];
     }
 
     public function resolve($root, array $args, $context, ResolveInfo $resolveInfo, Closure $getSelectFields)
     {
-        $user = auth()->user();
+        $user = $context['user'] ?? auth()->user();
         if (!$user) {
-            return null;
+            throw new \Exception('Unauthorized');
         }
 
-        $agent = Agent::find($args['agent_id']);
-        if (!$agent || !$user->hasAgentAccess($agent)) {
-            return null;
+        // Use findOrFail to match controller behavior
+        $agent = Agent::findOrFail($args['agent_id']);
+        
+        if (!$user->hasAgentAccess($agent)) {
+            throw new \Exception('Bạn không có quyền truy cập đại lý này');
         }
 
         $period = $args['period'] ?? 'all';
-        $query = Transaction::where('agent_id', $agent->id)->where('status', 'Hoàn thành');
-        $query = $this->applyPeriod($query, $period);
+        
+        // Base query for completed transactions
+        $query = Transaction::where('agent_id', $agent->id)
+            ->where('status', 'Hoàn thành');
+        
+        $query = $this->applyPeriodFilter($query, $period);
 
+        // Calculate statistics
         $totalAmount = (float) (clone $query)->sum('total_amount');
         $totalProfit = (float) (clone $query)->sum('profit');
         $totalAgentAdvance = (float) (clone $query)->sum('agent_advance');
@@ -56,26 +63,30 @@ class StatisticsQuery extends Query
         $rutCount = (clone $query)->where('transaction_type', 'Rút')->count();
         $completedCount = (clone $query)->count();
 
+        // Get all status counts (not filtered by period)
         $byStatus = Transaction::where('agent_id', $agent->id)
             ->selectRaw('status, count(*) as cnt')
             ->groupBy('status')
             ->pluck('cnt', 'status')
             ->toArray();
 
-        $recent = Transaction::where('agent_id', $agent->id)
+        // Get recent transactions
+        $recentTransactions = Transaction::where('agent_id', $agent->id)
             ->whereNotNull('customer_name')
+            ->whereNotNull('total_amount')
             ->orderBy('transaction_date', 'desc')
             ->limit(10)
-            ->get(['customer_name', 'total_amount', 'transaction_type', 'transaction_date', 'status'])
-            ->map(fn ($t) => [
+            ->get(['customer_name', 'total_amount', 'transaction_type', 'transaction_date', 'status']);
+
+        $recent = $recentTransactions->map(function ($t) {
+            return [
                 'name' => $t->customer_name,
                 'amount' => (float) $t->total_amount,
                 'type' => $t->transaction_type,
-                'date' => $t->transaction_date?->format('d/m/Y H:i:s'),
+                'date' => $t->transaction_date?->format('d/m/Y H:i:s') ?? null,
                 'status' => $t->status,
-            ])
-            ->values()
-            ->toArray();
+            ];
+        })->values()->toArray();
 
         return [
             'total_transactions' => $completedCount,
@@ -85,13 +96,17 @@ class StatisticsQuery extends Query
             'dao_count' => $daoCount,
             'rut_count' => $rutCount,
             'recent' => $recent,
-            'by_status' => json_encode($byStatus),
+            'by_status' => json_encode($byStatus), // Convert to JSON string to match Type definition
         ];
     }
 
-    private function applyPeriod($query, string $period)
+    /**
+     * Apply period filter - matches REST API controller logic exactly
+     */
+    private function applyPeriodFilter($query, string $period)
     {
         $now = Carbon::now();
+        
         switch ($period) {
             case 'today':
                 return $query->whereDate('transaction_date', $now->toDateString());
@@ -100,7 +115,8 @@ class StatisticsQuery extends Query
             case 'week':
                 return $query->where('transaction_date', '>=', $now->copy()->subWeek());
             case 'month':
-                return $query->where('transaction_date', '>=', $now->copy()->subMonth());
+                return $query->whereMonth('transaction_date', $now->month)
+                    ->whereYear('transaction_date', $now->year);
             default:
                 return $query;
         }

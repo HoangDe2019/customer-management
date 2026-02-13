@@ -123,13 +123,15 @@ return [
                 \App\GraphQL\Types\CloneStatusType::class,
                 \App\GraphQL\Types\CloneLastRunType::class,
                 \App\GraphQL\Types\MomoStatusType::class,
+                \App\GraphQL\Types\MomoQRResponseType::class,
+
             ],
 
             // Laravel HTTP middleware
             'middleware' => null,
 
             // Which HTTP methods to support; must be given in UPPERCASE!
-            'method' => ['GET', 'POST'],
+            'method' => ['GET', 'POST', 'PUT'],
 
             // An array of middlewares, overrides the global ones
             'execution_middleware' => null,
@@ -169,6 +171,7 @@ return [
         \App\GraphQL\Types\CloneStatusType::class,
         \App\GraphQL\Types\CloneLastRunType::class,
         \App\GraphQL\Types\MomoStatusType::class,
+        \App\GraphQL\Types\MomoQRResponseType::class,
     ],
 
     // This callable will be passed the Error object for each errors GraphQL catch.

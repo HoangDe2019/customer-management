@@ -35,7 +35,7 @@ class ScanCCCDMutation extends Mutation
 
     public function resolve($root, array $args, $context, ResolveInfo $resolveInfo, Closure $getSelectFields)
     {
-        $user = $context['user'] ?? null;
+        $user = $context['user'] ?? auth()->user();
         $requestId = Str::uuid()->toString();
 
         if (!$user) {

@@ -1,8 +1,5 @@
 export {
-  getQueueStatus,
-  getCloneStatus,
-  dispatchJob,
-  triggerCloneToStaging,
+  generateMoMoQR,
 } from './graphqlApi';
 
 export interface QueueStatus {

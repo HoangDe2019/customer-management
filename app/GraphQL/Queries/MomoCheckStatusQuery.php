@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace App\GraphQL\Queries;
 
-use App\Http\Controllers\Api\MoMoController;
+use App\Services\MoMoService;
 use Closure;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
-use Illuminate\Http\Request;
 use Rebing\GraphQL\Support\Facades\GraphQL;
 use Rebing\GraphQL\Support\Query;
 
@@ -27,21 +26,30 @@ class MomoCheckStatusQuery extends Query
     public function args(): array
     {
         return [
-            'orderId' => ['type' => Type::nonNull(Type::string())],
+            'order_id' => [
+                'type' => Type::nonNull(Type::string()),
+                'description' => 'Mã đơn hàng MoMo',
+            ],
         ];
     }
 
     public function resolve($root, array $args, $context, ResolveInfo $resolveInfo, Closure $getSelectFields)
     {
-        $user = $context['user'] ?? null;
+        $user = auth()->user();
+        $requestId = Str::uuid()->toString();
+
         if (!$user) {
-            return ['status' => 'not_found', 'message' => 'Unauthorized'];
+            throw new \Exception('Unauthorized');
         }
 
-        $request = Request::create('/api/momo/check-status/' . $args['orderId'], 'GET');
-        $request->setUserResolver(fn () => $user);
+        // Resolve service from container inside resolve method
+        $momoService = app(MoMoService::class);
+        $result = $momoService->checkStatus($args['order_id']);
 
-        $response = app(MoMoController::class)->checkStatus($args['orderId']);
-        return json_decode($response->getContent(), true) ?? ['status' => 'not_found'];
+        return [
+            'status' => $result['status'],
+            'result_code' => $result['resultCode'],
+            'message' => $result['message'],
+        ];
     }
 }

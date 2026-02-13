@@ -48,7 +48,7 @@ return [
         'access_key' => env('MOMO_ACCESS_KEY'),
         'secret_key' => env('MOMO_SECRET_KEY'),
         'redirect_url' => env('MOMO_REDIRECT_URL'),
-        'ipn_url' => env('MOMO_IPN_URL', 'https://sandbox.vnpayment.vn/merchantv2/Account/TerminalEdit.htm'),
+        'ipn_url' => env('MOMO_IPN_URL', 'http://localhost:8000/api/momo/webhook'),
         'api_url' => env('MOMO_API_URL', 'https://payment.momo.vn/v2/gateway/api/create'),
     ],
 

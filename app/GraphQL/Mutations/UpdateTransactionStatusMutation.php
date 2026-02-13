@@ -36,7 +36,7 @@ class UpdateTransactionStatusMutation extends Mutation
 
     public function resolve($root, array $args, $context, ResolveInfo $resolveInfo, Closure $getSelectFields)
     {
-        $user = auth()->user() ?? null;
+        $user = $context['user'] ?? auth()->user();
         $requestId = Str::uuid()->toString();
 
         if (!$user) {

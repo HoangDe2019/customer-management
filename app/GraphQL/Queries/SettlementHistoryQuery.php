@@ -35,7 +35,7 @@ class SettlementHistoryQuery extends Query
 
     public function resolve($root, array $args, $context, ResolveInfo $resolveInfo, Closure $getSelectFields)
     {
-        $user = auth()->user();
+        $user = $context['user'] ?? auth()->user();
         if (!$user) {
             return ['data' => [], 'current_page' => 1, 'last_page' => 1, 'per_page' => 15, 'total' => 0];
         }

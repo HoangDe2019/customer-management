@@ -30,7 +30,7 @@ class UserAgentsQuery extends Query
     public function resolve($root, array $args, $context, ResolveInfo $resolveInfo, Closure $getSelectFields)
     {
         // Get authenticated user
-        $user = auth()->user();
+        $user = $context['user'] ?? auth()->user();
 
         if (!$user) {
             throw new \Exception('Unauthenticated');

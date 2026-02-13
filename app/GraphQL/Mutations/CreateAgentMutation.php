@@ -42,7 +42,7 @@ class CreateAgentMutation extends Mutation
         $requestId = Str::uuid()->toString();
 
         // Get authenticated user
-        $user = auth()->user();
+        $user = $context['user'] ?? auth()->user();
 
         // Check authentication
         if (!$user) {

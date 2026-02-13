@@ -49,7 +49,7 @@ class CreateTransactionMutation extends Mutation
     public function resolve($root, array $args, $context, ResolveInfo $resolveInfo, Closure $getSelectFields)
     {
         // Get authenticated user
-        $user = auth()->user();
+        $user = $context['user'] ?? auth()->user();
         $requestId = Str::uuid()->toString();
 
         // Check authentication

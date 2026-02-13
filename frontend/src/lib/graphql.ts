@@ -5,7 +5,7 @@ const graphqlUrl = import.meta.env.VITE_GRAPHQL_URL || apiBase + '/graphql';
 
 export const graphqlClient = new GraphQLClient(graphqlUrl, {
   headers: () => {
-    const token = localStorage.getItem('access_token');
+    const token = sessionStorage.getItem('access_token');
     return {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),

@@ -108,7 +108,7 @@ class DailyAdvance extends Model
         $this->is_settled = true;
         $this->settled_at = now();
         $this->settlement_transaction_id = $settlementTransactionId ?? 'SETTLEMENT_' . time();
-        
+
         return $this->save();
     }
 
@@ -122,7 +122,7 @@ class DailyAdvance extends Model
         $this->is_settled = false;
         $this->settled_at = null;
         $this->settlement_transaction_id = null;
-        
+
         return $this->save();
     }
 
@@ -137,7 +137,7 @@ class DailyAdvance extends Model
     {
         $advances = self::where('agent_id', $agentId)
             ->whereDate('advance_date', $date)
-            ->get();
+            ->get()->unique('transaction_id');
 
         $total = $advances->sum('advance_amount');
         $settled = $advances->where('is_settled', true)->sum('advance_amount');
@@ -163,7 +163,7 @@ class DailyAdvance extends Model
     public static function batchSettleForDate(int $agentId, string $date, ?string $settlementTransactionId = null): array
     {
         $settlementId = $settlementTransactionId ?? 'EOD_' . time();
-        
+
         $advances = self::where('agent_id', $agentId)
             ->whereDate('advance_date', $date)
             ->where('is_settled', false)

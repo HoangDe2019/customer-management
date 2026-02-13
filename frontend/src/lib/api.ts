@@ -8,7 +8,7 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access_token');
+  const token = sessionStorage.getItem('access_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -19,8 +19,8 @@ api.interceptors.response.use(
   (res) => res,
   async (err: AxiosError<{ message?: string; error?: string }>) => {
     if (err.response?.status === 401) {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user');
+      sessionStorage.removeItem('access_token');
+      sessionStorage.removeItem('user');
       window.location.href = '/login';
     }
     return Promise.reject(err);
@@ -28,19 +28,19 @@ api.interceptors.response.use(
 );
 
 export function setAuthToken(token: string) {
-  localStorage.setItem('access_token', token);
+  sessionStorage.setItem('access_token', token);
 }
 
 export function clearAuth() {
-  localStorage.removeItem('access_token');
-  localStorage.removeItem('user');
+  sessionStorage.removeItem('access_token');
+  sessionStorage.removeItem('user');
 }
 
 export function getStoredUser() {
-  const raw = localStorage.getItem('user');
+  const raw = sessionStorage.getItem('user');
   return raw ? JSON.parse(raw) : null;
 }
 
 export function storeUser(user: unknown) {
-  localStorage.setItem('user', JSON.stringify(user));
+  sessionStorage.setItem('user', JSON.stringify(user));
 }

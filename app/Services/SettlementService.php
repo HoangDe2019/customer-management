@@ -62,7 +62,9 @@ class SettlementService
             ->whereDate('advance_date', $date)
             ->where('is_settled', false)
             ->with('transaction:id,transaction_id')
-            ->get();
+            ->get()
+            ->unique('transaction_id');      // <<< FIX DUP HERE
+            
         $transactions = $advances->map(fn ($a) => [
             'transaction_id' => $a->transaction->transaction_id ?? null,
             'amount' => (float) $a->advance_amount,

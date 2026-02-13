@@ -31,11 +31,11 @@ body {
 }
 
 a {
-  color: var(--cm-primary-light);
+  color: #ffffff;
   text-decoration: none;
 }
 a:hover {
-  color: var(--cm-primary-dark);
+  color: #aac7d4;
   text-decoration: underline;
 }
 
@@ -81,7 +81,7 @@ a:hover {
   color: #fff;
 }
 .nav-link.active {
-  background: var(--cm-primary-light);
+  background: #e1e90e;
   color: #fff;
 }
 

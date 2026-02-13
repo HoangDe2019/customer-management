@@ -14,14 +14,11 @@ import {
   Fade,
 } from '@mui/material';
 import {
-  getQueueStatus,
-  triggerCloneToStaging,
-  getCloneStatus,
-  dispatchJob,
   type QueueStatus,
   type CloneLastRun,
 } from '../api/queue';
 import { subscribeJobUpdates } from '../lib/echo';
+import { dispatchJob, getCloneStatus, getQueueStatus, triggerCloneToStaging } from '../api/graphqlApi';
 
 const JOB_TYPES = [
   { value: 'sync_to_staging', label: 'Clone to Staging' },

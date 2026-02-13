@@ -22,10 +22,10 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<User | null>(() => getStoredUser());
-  const [loading, setLoading] = useState(!!localStorage.getItem('access_token'));
+  const [loading, setLoading] = useState(!!sessionStorage.getItem('access_token'));
 
   const refreshUser = useCallback(async () => {
-    if (!localStorage.getItem('access_token')) {
+    if (!sessionStorage.getItem('access_token')) {
       setUserState(null);
       setLoading(false);
       return;
@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (localStorage.getItem('access_token') && !user?.agents) {
+    if (sessionStorage.getItem('access_token') && !user?.agents) {
       refreshUser();
     } else {
       setLoading(false);

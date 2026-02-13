@@ -29,7 +29,7 @@ export function getEcho(): Echo | null {
   if (echo) return echo;
 
   try {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
 
     echo = new Echo({
       broadcaster: 'reverb',
@@ -230,10 +230,10 @@ export function waitForRequestResult(
 // ==================== Convenience Function ====================
 
 /**
- * Get current user ID from localStorage
+ * Get current user ID from sessionStorage
  */
 export function getCurrentUserId(): number | null {
-  const userStr = localStorage.getItem('user');
+  const userStr = sessionStorage.getItem('user');
   if (!userStr) return null;
 
   try {

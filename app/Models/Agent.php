@@ -278,7 +278,7 @@ class Agent extends Model
             'total_advance' => (float) $query->sum('agent_advance'),
             'dao_count' => (clone $query)->where('transaction_type', 'Đáo')->count(),
             'rut_count' => (clone $query)->where('transaction_type', 'Rút')->count(),
-        ];
+        ];  
     }
 
     /**

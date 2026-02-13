@@ -97,6 +97,8 @@ async function waitForAckNotification(
         typeof timeoutMs === 'number' ? timeoutMs : NOTIFY_TIMEOUT
     );
 
+    console.log("notification", notification);
+
     if (!notification) {
         throw new Error(
             ack.message || 'Không nhận được phản hồi từ hệ thống. Vui lòng thử lại.'

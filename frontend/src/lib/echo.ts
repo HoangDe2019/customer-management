@@ -178,54 +178,45 @@ export function subscribeRequestResults(
  * ✅ Now uses private channel
  */
 export function waitForRequestResult(
-    requestId: string,
-    userId: number | string,
-    timeoutMs: number = 30000
-  ): Promise<RequestCompletedPayload | null> {
-    return new Promise((resolve) => {
-      //console.log(`[Echo] ⏳ Waiting for request: ${requestId}`);
-      //console.log(`[Echo] 👤 User ID: ${userId}`);
-      //console.log(`[Echo] ⏰ Timeout: ${timeoutMs}ms`);
+  requestId: string,
+  userId: number | string,
+  timeoutMs: number = 30000
+): Promise<RequestCompletedPayload | null> {
+  return new Promise<RequestCompletedPayload | null>((resolve) => {
+    let resolved = false;
 
-      let resolved = false;
-      const safeResolve = (value: RequestCompletedPayload | null) => {
-        if (!resolved) {
-          resolved = true;
-          console.log(`[Echo] ✅ Resolving with:`, value);
-          resolve(value);
-        }
-      };
-
-      const unsub = subscribeRequestResults(userId, (payload) => {
-        if (payload.request_id === requestId) {
-          //console.log(`[Echo] ✅ Match! Resolving...`);
-          unsub?.();
-          safeResolve(payload);
-        } else {
-          console.log(`[Echo] ⚠️ Request ID mismatch, ignoring...`);
-        }
-      });
-
-      if (!unsub) {
-        //console.error('[Echo] ❌ Failed to subscribe');
-        safeResolve(null);
-        return;
-      }
-
-      // Timeout handler
-      const timeoutId = setTimeout(() => {
-        unsub();
-        safeResolve(null);
-      }, timeoutMs);
-
-      // Clear timeout on early resolution
-      const originalResolve = resolve;
-      resolve = (value) => {
+    const safeResolve = (value: RequestCompletedPayload | null) => {
+      if (!resolved) {
+        resolved = true;
         clearTimeout(timeoutId);
-        originalResolve(value);
-      };
+        resolve(value);
+      }
+    };
+
+    const unsub = subscribeRequestResults(userId, (payload) => {
+      console.log("payload", payload);
+      if (payload.request_id === requestId) {
+        //console.log(`[Echo] ✅ Match! Resolving...`);
+        unsub?.();
+        safeResolve(payload);
+      } else {
+        console.log(`[Echo] ⚠️ Request ID mismatch, ignoring...`);
+      }
     });
-  }
+
+    if (!unsub) {
+      //console.error('[Echo] ❌ Failed to subscribe');
+      safeResolve(null);
+      return;
+    }
+
+    // Timeout handler
+    const timeoutId = setTimeout(() => {
+      unsub();
+      safeResolve(null);
+    }, timeoutMs);
+  });
+}
 
 // ==================== Convenience Function ====================
 

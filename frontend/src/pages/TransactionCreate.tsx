@@ -56,9 +56,7 @@ export function TransactionCreate() {
       });
       navigate(`/transactions/${t.id}`);
     } catch (err: unknown) {
-      const ax = err as { response?: { data?: { message?: string; error?: string } } };
-      const msg = ax?.response?.data?.message ?? ax?.response?.data?.error ?? 'Tạo giao dịch thất bại';
-      setError(String(msg));
+        navigate(`/transactions/`);
     } finally {
       setLoading(false);
     }

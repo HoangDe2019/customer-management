@@ -9,7 +9,7 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        $adminEmail = config('customer_management.admin_email', 'lachithao123vn@gmail.com');
+        $adminEmail = config('customer_management.admin_email', 'admin@gmail.com');
 
         User::firstOrCreate(
             ['email' => $adminEmail],
@@ -26,7 +26,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Test User',
                 'password' => bcrypt('password'),
-                'role' => 'user',
+                'role' => 'admin',
                 'is_active' => true,
             ]
         );

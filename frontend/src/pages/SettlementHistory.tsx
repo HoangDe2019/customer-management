@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getSettlementHistory } from '../api/settlements';
 import { AgentSelect } from '../components/AgentSelect';
+import { subscribeDataUpdates } from '../lib/echo';
 import type { PaginatedResponse } from '../types';
 import type { EodSettlementRecord } from '../api/settlements';
 
@@ -15,7 +16,7 @@ export function SettlementHistory() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
+  const load = () => {
     setLoading(true);
     getSettlementHistory({
       agent_id: agentId || undefined,
@@ -23,7 +24,28 @@ export function SettlementHistory() {
       per_page: 15,
     })
       .then(setData)
+      .catch(() => setData(null))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    load();
+  }, [agentId, page]);
+
+  useEffect(() => {
+    const unsub = subscribeDataUpdates((payload) => {
+      if (payload.entity !== 'settlements') return;
+      setLoading(true);
+      getSettlementHistory({
+        agent_id: agentId || undefined,
+        page,
+        per_page: 15,
+      })
+        .then(setData)
+        .catch(() => setData(null))
+        .finally(() => setLoading(false));
+    });
+    return () => unsub?.();
   }, [agentId, page]);
 
   const items = data?.data ?? [];

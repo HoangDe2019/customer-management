@@ -9,8 +9,10 @@
         "php": "^8.2",
         "darkaonline/l5-swagger": "^10.1",
         "laravel/framework": "^12.0",
+        "laravel/reverb": "^1.7",
         "laravel/sanctum": "^4.3",
         "laravel/tinker": "^2.10.1",
+        "rebing/graphql-laravel": "^9.14",
         "tymon/jwt-auth": "^2.2"
     },
     "require-dev": {

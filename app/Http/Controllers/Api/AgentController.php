@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\DataUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Agent;
 use App\Models\User;
@@ -86,6 +87,7 @@ class AgentController extends Controller
                 $agent->users()->syncWithoutDetaching([$user->id]);
             }
         }
+        event(new DataUpdated('agents', 'created'));
 
         return response()->json([
             'success' => true,
@@ -130,6 +132,7 @@ class AgentController extends Controller
             $agent->users()->sync($userIds);
         }
         $agent->save();
+        event(new DataUpdated('agents', 'updated'));
 
         return response()->json(['success' => true, 'message' => 'Đã cập nhật thành công', 'agent' => $agent]);
     }
@@ -147,6 +150,7 @@ class AgentController extends Controller
         }
         $agent->status = 'Deleted';
         $agent->save();
+        event(new DataUpdated('agents', 'deleted'));
         return response()->json(['success' => true, 'message' => 'Đã xóa đại lý']);
     }
 }

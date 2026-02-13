@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 import { getEodSettlement, saveEodSettlement } from '../api/settlements';
 import { AgentSelect } from '../components/AgentSelect';
+import { subscribeDataUpdates } from '../lib/echo';
 
 function toDDMMYYYY(d: Date) {
   const day = String(d.getDate()).padStart(2, '0');
@@ -25,25 +26,43 @@ export function SettlementEod() {
   const [data, setData] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const load = () => {
+  const load = async () => {
     if (!agentId) return;
     setLoading(true);
-    getEodSettlement(agentId, date)
-      .then(setData)
-      .finally(() => setLoading(false));
+    setError(null);
+    try {
+      const res = await getEodSettlement(agentId, date);
+      setData(res);
+    } catch {
+      setError('Không tải được dữ liệu đối soát.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSave = async () => {
     if (!agentId || !data) return;
     setSaving(true);
+    setError(null);
     try {
       await saveEodSettlement(agentId, date, data as Record<string, unknown>);
-      load();
+      await load();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Lưu thất bại.';
+      setError(String(msg));
     } finally {
       setSaving(false);
     }
   };
+
+  useEffect(() => {
+    const unsub = subscribeDataUpdates((payload) => {
+      if (payload.entity === 'settlements') load();
+    });
+    return () => unsub?.();
+  }, [agentId, date]);
 
   return (
     <Container maxWidth="md">
@@ -56,6 +75,11 @@ export function SettlementEod() {
         </Typography>
       </Box>
 
+      {error && (
+        <Box sx={{ mb: 2, p: 1.5, bgcolor: 'error.light', color: 'error.contrastText', borderRadius: 1 }}>
+          {error}
+        </Box>
+      )}
       <Card sx={{ mb: 3 }} variant="outlined">
         <CardContent>
           <Box

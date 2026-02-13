@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getTransaction, updateTransactionStatus } from '../api/transactions';
+import { subscribeDataUpdates } from '../lib/echo';
 import type { Transaction } from '../types';
 
 const STATUS_OPTIONS = [
@@ -28,23 +29,40 @@ export function TransactionDetail() {
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [statusError, setStatusError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     if (!id) return;
+    setLoading(true);
     getTransaction(Number(id))
       .then(setTransaction)
       .catch(() => setTransaction(null))
       .finally(() => setLoading(false));
   }, [id]);
 
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useEffect(() => {
+    const unsub = subscribeDataUpdates((payload) => {
+      if (payload.entity === 'transactions') load();
+    });
+    return () => unsub?.();
+  }, [load]);
+
   const handleStatusChange = async (newStatus: string) => {
     if (!transaction) return;
     setUpdating(true);
+    setStatusError(null);
     try {
       const updated = await updateTransactionStatus(transaction.id, newStatus);
       setTransaction(updated);
+    } catch {
+      setStatusError('Cập nhật trạng thái thất bại.');
     } finally {
       setUpdating(false);
+      load()
     }
   };
 
@@ -119,6 +137,7 @@ export function TransactionDetail() {
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
+            {statusError && <div className="alert alert-error" style={{ marginTop: 8 }}>{statusError}</div>}
           </span>
         </div>
         <div className="detail-row">

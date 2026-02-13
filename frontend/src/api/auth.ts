@@ -1,5 +1,7 @@
 import { api, setAuthToken, storeUser, clearAuth } from '../lib/api';
 import type { AuthResponse, User } from '../types';
+import { graphqlRequest } from '../lib/graphql';
+import * as ops from '../graphql/operations';
 
 export async function login(email: string, password: string): Promise<AuthResponse> {
   const { data } = await api.post<AuthResponse>('/auth/login', { email, password });
@@ -35,8 +37,9 @@ export async function refreshToken(): Promise<AuthResponse> {
   return data;
 }
 
+/** Lấy user hiện tại qua GraphQL. */
 export async function getMe(): Promise<User> {
-  const { data } = await api.get<User>('/auth/me');
-  storeUser(data);
-  return data;
+  const res = await graphqlRequest<{ me: User }>(ops.QUERY_ME);
+  if (res.me) storeUser(res.me);
+  return res.me;
 }

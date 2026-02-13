@@ -48,10 +48,10 @@ export function AgentForm({ agent, onSuccess, onCancel }: AgentFormProps) {
       }
       onSuccess();
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
-        'Có lỗi xảy ra';
-      setError(String(msg));
+      const axiosErr = err as { response?: { data?: { error?: string; message?: string } } };
+      const serverMsg = axiosErr.response?.data?.error || axiosErr.response?.data?.message;
+      const fallbackMsg = err instanceof Error ? err.message : 'Có lỗi xảy ra';
+      setError(String(serverMsg || fallbackMsg));
     } finally {
       setLoading(false);
     }

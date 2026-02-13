@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Broadcasting\BroadcastController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\SettlementController;
@@ -18,6 +19,8 @@ Route::post('/momo/webhook', [MoMoController::class, 'webhook']);
 
 // Protected routes (JWT)
 Route::middleware('auth:api')->group(function () {
+    // Broadcasting auth for Echo/Reverb (JWT auth:api)
+    Route::post('/broadcasting/auth', [BroadcastController::class, 'authenticate']);
 
     // Auth
     Route::post('/auth/logout', [AuthController::class, 'logout']);

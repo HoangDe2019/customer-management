@@ -12,6 +12,11 @@ return [
             'hostname' => env('REVERB_HOST'),
             'options' => ['tls' => []],
             'max_request_size' => env('REVERB_MAX_REQUEST_SIZE', 10_000),
+
+            // Intervals expected by StartServer (for Pulse & Telescope)
+            'pulse_ingest_interval' => env('REVERB_PULSE_INGEST_INTERVAL', 15),
+            'telescope_ingest_interval' => env('REVERB_TELESCOPE_INGEST_INTERVAL', 15),
+
             'scaling' => [
                 'enabled' => env('REVERB_SCALING_ENABLED', false),
                 'channel' => env('REVERB_SCALING_CHANNEL', 'reverb'),
@@ -49,6 +54,4 @@ return [
             ],
         ],
     ],
-    'pulse_ingest_interval' => env('REVERB_PULSE_INGEST_INTERVAL', 15),
-    'telescope_ingest_interval' => env('REVERB_TELESCOPE_INGEST_INTERVAL', 15),
 ];

@@ -4,6 +4,7 @@
  */
 import { graphqlRequest } from '../lib/graphql';
 import { getCurrentUserId, waitForRequestResult } from '../lib/echo';
+import type { RequestCompletedPayload } from '../lib/echo';
 import * as ops from '../graphql/operations';
 import type {
     User,
@@ -17,7 +18,6 @@ import type {
     CCCDScanResult,
 } from '../types';
 import { api } from '../lib/api';
-import { data } from 'react-router-dom';
 interface QueueStatus {
     connection: string;
     driver: string;
@@ -78,19 +78,48 @@ interface RequestAck {
     message?: string;
 }
 
+/**
+ * Helper: wait for WebSocket notification for a given RequestAck.
+ * Throws on timeout or when backend reports error.
+ */
+async function waitForAckNotification(
+    ack: RequestAck,
+    timeoutMs?: number
+): Promise<RequestCompletedPayload> {
+    const userId = getCurrentUserId();
+    if (!userId) {
+        throw new Error('User not authenticated');
+    }
+
+    const notification = await waitForRequestResult(
+        ack.request_id,
+        userId,
+        typeof timeoutMs === 'number' ? timeoutMs : NOTIFY_TIMEOUT
+    );
+
+    if (!notification) {
+        throw new Error(
+            ack.message || 'Không nhận được phản hồi từ hệ thống. Vui lòng thử lại.'
+        );
+    }
+
+    if (!notification.success) {
+        throw new Error(notification.error || 'Xử lý yêu cầu thất bại');
+    }
+
+    return notification;
+}
+
 export async function createAgent(payload: {
     name: string;
     allowed_users?: string;
 }): Promise<void> {
-    const res = await graphqlRequest<{ createAgent: RequestAck }>(ops.MUTATION_CREATE_AGENT, payload);
+    const res = await graphqlRequest<{ createAgent: RequestAck }>(
+        ops.MUTATION_CREATE_AGENT,
+        payload
+    );
     const ack = res.createAgent;
-    const userId = getCurrentUserId();
-    if (!userId) throw new Error('User not authenticated');
-    const notification = await waitForRequestResult(ack.request_id, userId, NOTIFY_TIMEOUT);
-
-    if (notification && !notification.success) {
-        throw new Error(notification.error || 'Tạo đại lý thất bại');
-    }
+    await waitForAckNotification(ack);
 }
 
 export async function updateAgent(
@@ -102,25 +131,14 @@ export async function updateAgent(
         ...payload,
     });
     const ack = res.updateAgent;
-    const userId = getCurrentUserId();
-    if (!userId) throw new Error('User not authenticated');
-    const notification = await waitForRequestResult(ack.request_id, userId, NOTIFY_TIMEOUT);
-
-    if (notification && !notification.success) {
-        throw new Error(notification.error || 'Cập nhật thất bại');
-    }
+    await waitForAckNotification(ack);
 }
 
 export async function deleteAgent(id: number): Promise<void> {
     const res = await graphqlRequest<{ deleteAgent: RequestAck }>(ops.MUTATION_DELETE_AGENT, { id });
     console.log("agent", res);
     const ack = res.deleteAgent;
-    const userId = getCurrentUserId();
-    if (!userId) throw new Error('User not authenticated');
-    const notification = await waitForRequestResult(ack.request_id, userId, NOTIFY_TIMEOUT);
-    if (notification && !notification.success) {
-        throw new Error(notification.error || 'Xóa thất bại');
-    }
+    await waitForAckNotification(ack);
 }
 
 // --- Transactions
@@ -164,14 +182,8 @@ export async function createTransaction(payload: {
         payload as Record<string, unknown>
     );
     const ack = res.createTransaction;
-    const userId = getCurrentUserId();
-    if (!userId) throw new Error('User not authenticated');
-    const notification = await waitForRequestResult(ack.request_id, userId, NOTIFY_TIMEOUT);
-    if (notification && !notification.success) {
-        throw new Error(notification.error || 'Tạo giao dịch thất bại');
-    }
-
-    return notification?.data as unknown as Transaction;
+    const notification = await waitForAckNotification(ack);
+    return notification.data as unknown as Transaction;
 }
 
 export async function updateTransactionStatus(
@@ -183,13 +195,7 @@ export async function updateTransactionStatus(
         { id, status }
     );
     const ack = res.updateTransactionStatus;
-    const userId = getCurrentUserId();
-    if (!userId) throw new Error('User not authenticated');
-    const notification = await waitForRequestResult(ack.request_id, userId, NOTIFY_TIMEOUT);
-
-    if (notification && !notification.success) {
-        throw new Error(notification.error || 'Cập nhật trạng thái thất bại');
-    }
+    await waitForAckNotification(ack);
 }
 
 export async function scanCCCD(imageBase64: string): Promise<CCCDScanResult> {
@@ -198,14 +204,8 @@ export async function scanCCCD(imageBase64: string): Promise<CCCDScanResult> {
     });
 
     const ack = res.scanCCCD;
-    const userId = getCurrentUserId();
-    if (!userId) throw new Error('User not authenticated');
-    const notification = await waitForRequestResult(ack.request_id, userId, 60000);
-
-    if (notification && !notification.success) {
-        throw new Error(notification.error || 'Quét CCCD thất bại');
-    }
-    return notification as CCCDScanResult
+    const notification = await waitForAckNotification(ack, 60000);
+    return (notification.data ?? null) as CCCDScanResult;
 }
 
 // --- Settlements
@@ -233,13 +233,7 @@ export async function settleDailyAdvances(
         { agent_id: agentId, date }
     );
     const ack = res.settleDailyAdvances;
-    const userId = getCurrentUserId();
-    if (!userId) throw new Error('User not authenticated');
-    const notification = await waitForRequestResult(ack.request_id, userId, NOTIFY_TIMEOUT);
-    if (notification?.success) return { success: true };
-    if (notification && !notification.success) {
-        return { success: false, message: notification.error ?? undefined };
-    }
+    await waitForAckNotification(ack);
     return { success: true };
 }
 
@@ -272,13 +266,7 @@ export async function saveEodSettlement(
         }
     );
     const ack = res.saveEodSettlement;
-    const userId = getCurrentUserId();
-    if (!userId) throw new Error('User not authenticated');
-    const notification = await waitForRequestResult(ack.request_id, userId, NOTIFY_TIMEOUT);
-
-    if (notification && !notification.success) {
-        throw new Error(notification.error || 'Lưu đối soát thất bại');
-    }
+    await waitForAckNotification(ack);
 }
 
 export async function getSettlementHistory(params?: {
@@ -355,8 +343,35 @@ export async function generateMoMoQR(payload: {
     total_amount: number;
     transaction_type: 'Đáo' | 'Rút';
 }): Promise<MoMoQRResponse> {
-    const { data } = await api.post<MoMoQRResponse>('/momo/generate-qr', payload);
-    return data;
+    // Dùng GraphQL + WebSocket notification thay vì REST thuần
+    const res = await graphqlRequest<{ generateMoMoQR: RequestAck }>(
+        ops.MUTATION_GENERATE_MOMO_QR,
+        payload
+    );
+    const ack = res.generateMoMoQR;
+    const notification = await waitForAckNotification(ack);
+
+    const raw = (notification.data ?? {}) as {
+        payment_id?: number | null;
+        order_id?: string | null;
+        qr_code_url?: string | null;
+        pay_url?: string | null;
+        deeplink?: string | null;
+        status?: string;
+        result_code?: number | string;
+        message?: string;
+    };
+
+    return {
+        paymentId: raw.payment_id ?? null,
+        orderId: raw.order_id ?? null,
+        qrCodeUrl: raw.qr_code_url ?? null,
+        payUrl: raw.pay_url ?? null,
+        deeplink: raw.deeplink ?? null,
+        status: (raw.status as MoMoQRResponse['status']) ?? 'failed',
+        resultCode: raw.result_code ?? -1,
+        message: raw.message ?? 'Unknown error',
+    };
 }
 
 export async function checkMoMoStatus(orderId: string): Promise<{

@@ -29,7 +29,7 @@ export function getEcho(): Echo | null {
   if (echo) return echo;
 
   try {
-    const token = sessionStorage.getItem('token');
+    const token = sessionStorage.getItem('access_token');
 
     echo = new Echo({
       broadcaster: 'reverb',

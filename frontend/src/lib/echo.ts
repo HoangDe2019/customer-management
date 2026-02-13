@@ -194,13 +194,13 @@ export function waitForRequestResult(
     };
 
     const unsub = subscribeRequestResults(userId, (payload) => {
-      console.log("payload", payload);
+      // console.log("payload", payload);
       if (payload.request_id === requestId) {
         //console.log(`[Echo] ✅ Match! Resolving...`);
         unsub?.();
         safeResolve(payload);
       } else {
-        console.log(`[Echo] ⚠️ Request ID mismatch, ignoring...`);
+        // console.log(`[Echo] ⚠️ Request ID mismatch, ignoring...`);
       }
     });
 

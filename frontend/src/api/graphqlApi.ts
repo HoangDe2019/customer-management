@@ -97,7 +97,7 @@ async function waitForAckNotification(
         typeof timeoutMs === 'number' ? timeoutMs : NOTIFY_TIMEOUT
     );
 
-    console.log("notification", notification);
+    // console.log("notification", notification);
 
     if (!notification) {
         throw new Error(
@@ -138,7 +138,7 @@ export async function updateAgent(
 
 export async function deleteAgent(id: number): Promise<void> {
     const res = await graphqlRequest<{ deleteAgent: RequestAck }>(ops.MUTATION_DELETE_AGENT, { id });
-    console.log("agent", res);
+    // console.log("agent", res);
     const ack = res.deleteAgent;
     await waitForAckNotification(ack);
 }

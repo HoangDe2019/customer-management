@@ -29,3 +29,6 @@ Homestead.json
 .phpactor.json
 auth.json
 storage/logs/*
+
+*.log
+logs/

@@ -42,17 +42,17 @@ class StatisticsQuery extends Query
 
         // Use findOrFail to match controller behavior
         $agent = Agent::findOrFail($args['agent_id']);
-        
+
         if (!$user->hasAgentAccess($agent)) {
             throw new \Exception('Bạn không có quyền truy cập đại lý này');
         }
 
         $period = $args['period'] ?? 'all';
-        
+
         // Base query for completed transactions
         $query = Transaction::where('agent_id', $agent->id)
             ->where('status', 'Hoàn thành');
-        
+
         $query = $this->applyPeriodFilter($query, $period);
 
         // Calculate statistics
@@ -83,7 +83,7 @@ class StatisticsQuery extends Query
                 'name' => $t->customer_name,
                 'amount' => (float) $t->total_amount,
                 'type' => $t->transaction_type,
-                'date' => $t->transaction_date?->format('d/m/Y H:i:s') ?? null,
+                'date' => $t->transaction_date?->timezone('Asia/Bangkok')->format('d/m/Y H:i:s') ?? null,
                 'status' => $t->status,
             ];
         })->values()->toArray();
@@ -106,7 +106,7 @@ class StatisticsQuery extends Query
     private function applyPeriodFilter($query, string $period)
     {
         $now = Carbon::now();
-        
+
         switch ($period) {
             case 'today':
                 return $query->whereDate('transaction_date', $now->toDateString());

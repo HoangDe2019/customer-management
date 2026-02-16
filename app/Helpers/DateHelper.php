@@ -17,7 +17,7 @@ class DateHelper
         } catch (\Exception $e) {
             // Try with time
             try {
-                return Carbon::createFromFormat('d/m/Y H:i:s', $date);
+                return Carbon::createFromFormat('d/m/Y H:i:s', $date, 'Asia/Bangkok');
             } catch (\Exception $e) {
                 return Carbon::parse($date);
             }
@@ -29,7 +29,7 @@ class DateHelper
      */
     public static function formatVietnamese(?Carbon $date): string
     {
-        return $date ? $date->format('d/m/Y H:i:s') : '';
+        return $date ? $date->timezone('Asia/Bangkok')->format('d/m/Y H:i:s') : '';
     }
 
     /**

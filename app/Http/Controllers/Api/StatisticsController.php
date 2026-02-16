@@ -52,7 +52,7 @@ class StatisticsController extends Controller
             'name' => $t->customer_name,
             'amount' => (float) $t->total_amount,
             'type' => $t->transaction_type,
-            'date' => $t->transaction_date?->format('d/m/Y H:i:s'),
+            'date' => $t->transaction_date?->timezone('Asia/Bangkok')->format('d/m/Y H:i:s'),
             'status' => $t->status,
         ])->values()->toArray();
 

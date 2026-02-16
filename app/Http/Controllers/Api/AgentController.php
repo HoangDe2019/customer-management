@@ -29,7 +29,7 @@ class AgentController extends Controller
             'name' => $a->name,
             'status' => $a->status,
             'allowed_users' => $a->allowed_users,
-            'created_date' => $a->created_at?->format('d/m/Y H:i:s'),
+            'created_date' => $a->created_at?->timezone('Asia/Bangkok')->format('d/m/Y H:i:s'),
         ])->toArray();
 
         return response()->json(['agents' => $list]);
